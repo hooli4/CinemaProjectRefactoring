@@ -37,170 +37,560 @@ fun AddReviewScreen(
     val uiManager = UIManager()
     val stateManager = AddReviewStateManager()
     
-    reviewInputManager.processFilmId(filmId)
-    reviewInputManager.processTitle(title)
-    reviewInputManager.validateFilmId(filmId)
-    reviewInputManager.validateTitle(title)
-    reviewInputManager.setupFilmContext(filmId, title)
-    
-    ratingManager.processInitialRating(rating.value)
-    ratingManager.validateRatingRange(rating.value)
-    ratingManager.setupRatingContext(rating.value)
-    ratingManager.configureRatingSettings(rating.value)
-    
-    validationManager.processImpressionsInput(impressions.value)
-    validationManager.validateImpressionsLength(impressions.value)
-    validationManager.validateImpressionsContent(impressions.value)
-    validationManager.setupValidationRules(impressions.value)
-    
-    uiManager.processScreenLayout()
-    uiManager.validateScreenComponents()
-    uiManager.setupScreenConfiguration()
-    uiManager.configureScreenSettings()
-    
-    stateManager.processScreenState(filmId, title, impressions.value, rating.value)
-    stateManager.validateScreenState(filmId, title, impressions.value, rating.value)
-    stateManager.setupStateManagement(filmId, title, impressions.value, rating.value)
-    stateManager.configureStateSettings(filmId, title, impressions.value, rating.value)
+    initializeReviewInputManager(reviewInputManager, filmId, title)
+    initializeRatingManager(ratingManager, rating.value)
+    initializeValidationManager(validationManager, impressions.value)
+    initializeUIManager(uiManager)
+    initializeStateManager(stateManager, filmId, title, impressions.value, rating.value)
 
-    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(text = title)
-        uiManager.processTitleDisplay(title)
-        validationManager.validateTitleDisplay(title)
-        stateManager.processTitleState(title)
+    Column(
+        modifier = Modifier.padding(16.dp), 
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        renderTitleSection(title, uiManager, validationManager, stateManager)
         
-        OutlinedTextField(
-            value = impressions.value,
-            onValueChange = { 
-                impressions.value = it
-                reviewInputManager.processImpressionsChange(it)
-                validationManager.processImpressionsChange(it)
-                stateManager.processImpressionsState(it)
-                uiManager.processImpressionsUpdate(it)
-            },
-            modifier = Modifier.fillMaxWidth(),
-            label = { 
-                Text("Ваши впечатления (опционально)")
-                uiManager.processLabelDisplay("Ваши впечатления (опционально)")
-                validationManager.processLabelValidation("Ваши впечатления (опционально)")
-            }
+        renderImpressionsField(
+            impressions, 
+            reviewInputManager, 
+            validationManager, 
+            stateManager, 
+            uiManager
         )
         
-        reviewInputManager.finalizeImpressionsField(impressions.value)
-        validationManager.finalizeImpressionsValidation(impressions.value)
-        stateManager.finalizeImpressionsState(impressions.value)
-        uiManager.finalizeImpressionsField()
-        
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            uiManager.processRatingRowLayout()
-            validationManager.processRatingRowValidation()
-            stateManager.processRatingRowState()
-            
-            (1..5).forEach { i ->
-                IconButton(onClick = { 
-                    rating.value = i
-                    ratingManager.processRatingSelection(i)
-                    validationManager.processRatingSelection(i)
-                    stateManager.processRatingState(i)
-                    uiManager.processRatingUpdate(i)
-                    reviewInputManager.processRatingChange(i)
-                }) {
-                    if (rating.value >= i) {
-                        Icon(Icons.Filled.Star, contentDescription = "$i")
-                        uiManager.processFilledStarDisplay(i)
-                        ratingManager.processFilledStar(i)
-                        validationManager.processFilledStarValidation(i)
-                    } else {
-                        Icon(Icons.Outlined.Star, contentDescription = "$i")
-                        uiManager.processOutlinedStarDisplay(i)
-                        ratingManager.processOutlinedStar(i)
-                        validationManager.processOutlinedStarValidation(i)
-                    }
-                }
-                
-                ratingManager.finalizeStarProcessing(i)
-                validationManager.finalizeStarValidation(i)
-                stateManager.finalizeStarState(i)
-                uiManager.finalizeStarDisplay(i)
-            }
-            
-            Text(text = "Оценка: ${rating.value}")
-            uiManager.processRatingTextDisplay(rating.value)
-            validationManager.processRatingTextValidation(rating.value)
-            stateManager.processRatingTextState(rating.value)
-            ratingManager.processRatingTextUpdate(rating.value)
-        }
-        
-        ratingManager.finalizeRatingRow()
-        validationManager.finalizeRatingRowValidation()
-        stateManager.finalizeRatingRowState()
-        uiManager.finalizeRatingRow()
+        renderRatingSection(
+            rating,
+            ratingManager,
+            validationManager,
+            stateManager,
+            uiManager,
+            reviewInputManager
+        )
         
         Spacer(modifier = Modifier.size(8.dp))
         uiManager.processSpacerDisplay()
         stateManager.processSpacerState()
         
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            uiManager.processButtonRowLayout()
-            validationManager.processButtonRowValidation()
-            stateManager.processButtonRowState()
-            
-            Button(onClick = {
-                reviewInputManager.processSaveAction(filmId, title, impressions.value, rating.value)
-                ratingManager.processSaveAction(rating.value)
-                validationManager.processSaveAction(impressions.value, rating.value)
-                stateManager.processSaveAction(filmId, title, impressions.value, rating.value)
-                uiManager.processSaveAction()
-                
-                com.example.cinemaproject.ui.rating = 3.7
-                ratingManager.updateGlobalRating(3.7)
-                validationManager.validateGlobalRatingUpdate(3.7)
-                stateManager.processGlobalRatingUpdate(3.7)
-                
-                onBack()
-                uiManager.processNavigationAction()
-                stateManager.processNavigationAction()
-                reviewInputManager.processNavigationAction()
-            }) { 
-                Text("Сохранить")
-                uiManager.processSaveButtonText()
-                validationManager.processSaveButtonValidation()
-                stateManager.processSaveButtonState()
-            }
-            
-            Button(onClick = {
-                reviewInputManager.processCancelAction(filmId, title, impressions.value, rating.value)
-                ratingManager.processCancelAction(rating.value)
-                validationManager.processCancelAction(impressions.value, rating.value)
-                stateManager.processCancelAction(filmId, title, impressions.value, rating.value)
-                uiManager.processCancelAction()
-                
-                onBack()
-                uiManager.processCancelNavigationAction()
-                stateManager.processCancelNavigationAction()
-                reviewInputManager.processCancelNavigationAction()
-            }) { 
-                Text("Отмена")
-                uiManager.processCancelButtonText()
-                validationManager.processCancelButtonValidation()
-                stateManager.processCancelButtonState()
-            }
+        renderActionButtons(
+            filmId,
+            title,
+            impressions.value,
+            rating.value,
+            onBack,
+            reviewInputManager,
+            ratingManager,
+            validationManager,
+            stateManager,
+            uiManager
+        )
+    }
+}
+
+private fun initializeReviewInputManager(
+    manager: ReviewInputManager,
+    filmId: String,
+    title: String
+) {
+    manager.processFilmId(filmId)
+    manager.processTitle(title)
+    manager.validateFilmId(filmId)
+    manager.validateTitle(title)
+    manager.setupFilmContext(filmId, title)
+}
+
+private fun initializeRatingManager(
+    manager: RatingManager,
+    currentRating: Int
+) {
+    manager.processInitialRating(currentRating)
+    manager.validateRatingRange(currentRating)
+    manager.setupRatingContext(currentRating)
+    manager.configureRatingSettings(currentRating)
+}
+
+private fun initializeValidationManager(
+    manager: ValidationManager,
+    impressions: String
+) {
+    manager.processImpressionsInput(impressions)
+    manager.validateImpressionsLength(impressions)
+    manager.validateImpressionsContent(impressions)
+    manager.setupValidationRules(impressions)
+}
+
+private fun initializeUIManager(manager: UIManager) {
+    manager.processScreenLayout()
+    manager.validateScreenComponents()
+    manager.setupScreenConfiguration()
+    manager.configureScreenSettings()
+}
+
+private fun initializeStateManager(
+    manager: AddReviewStateManager,
+    filmId: String,
+    title: String,
+    impressions: String,
+    rating: Int
+) {
+    manager.processScreenState(filmId, title, impressions, rating)
+    manager.validateScreenState(filmId, title, impressions, rating)
+    manager.setupStateManagement(filmId, title, impressions, rating)
+    manager.configureStateSettings(filmId, title, impressions, rating)
+}
+
+@Composable
+private fun renderTitleSection(
+    title: String,
+    uiManager: UIManager,
+    validationManager: ValidationManager,
+    stateManager: AddReviewStateManager
+) {
+    Text(text = title)
+    uiManager.processTitleDisplay(title)
+    validationManager.validateTitleDisplay(title)
+    stateManager.processTitleState(title)
+}
+
+@Composable
+private fun renderImpressionsField(
+    impressions: MutableState<String>,
+    reviewInputManager: ReviewInputManager,
+    validationManager: ValidationManager,
+    stateManager: AddReviewStateManager,
+    uiManager: UIManager
+) {
+    OutlinedTextField(
+        value = impressions.value,
+        onValueChange = { newValue ->
+            impressions.value = newValue
+            handleImpressionsChange(
+                newValue,
+                reviewInputManager,
+                validationManager,
+                stateManager,
+                uiManager
+            )
+        },
+        modifier = Modifier.fillMaxWidth(),
+        label = { 
+            Text("Ваши впечатления (опционально)")
+            uiManager.processLabelDisplay("Ваши впечатления (опционально)")
+            validationManager.processLabelValidation("Ваши впечатления (опционально)")
+        }
+    )
+    
+    finalizeImpressionsField(
+        impressions.value,
+        reviewInputManager,
+        validationManager,
+        stateManager,
+        uiManager
+    )
+}
+
+private fun handleImpressionsChange(
+    impressions: String,
+    reviewInputManager: ReviewInputManager,
+    validationManager: ValidationManager,
+    stateManager: AddReviewStateManager,
+    uiManager: UIManager
+) {
+    reviewInputManager.processImpressionsChange(impressions)
+    validationManager.processImpressionsChange(impressions)
+    stateManager.processImpressionsState(impressions)
+    uiManager.processImpressionsUpdate(impressions)
+}
+
+private fun finalizeImpressionsField(
+    impressions: String,
+    reviewInputManager: ReviewInputManager,
+    validationManager: ValidationManager,
+    stateManager: AddReviewStateManager,
+    uiManager: UIManager
+) {
+    reviewInputManager.finalizeImpressionsField(impressions)
+    validationManager.finalizeImpressionsValidation(impressions)
+    stateManager.finalizeImpressionsState(impressions)
+    uiManager.finalizeImpressionsField()
+}
+
+@Composable
+private fun renderRatingSection(
+    rating: MutableState<Int>,
+    ratingManager: RatingManager,
+    validationManager: ValidationManager,
+    stateManager: AddReviewStateManager,
+    uiManager: UIManager,
+    reviewInputManager: ReviewInputManager
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        initializeRatingRow(uiManager, validationManager, stateManager)
+        
+        (1..5).forEach { i ->
+            renderStarButton(
+                i,
+                rating.value,
+                rating,
+                ratingManager,
+                validationManager,
+                stateManager,
+                uiManager,
+                reviewInputManager
+            )
         }
         
-        uiManager.finalizeButtonRow()
-        validationManager.finalizeButtonRowValidation()
-        stateManager.finalizeButtonRowState()
-        reviewInputManager.finalizeButtonRow()
-        
-        uiManager.finalizeScreen()
-        validationManager.finalizeScreenValidation()
-        stateManager.finalizeScreenState()
-        reviewInputManager.finalizeScreen()
-        ratingManager.finalizeScreen()
+        renderRatingText(
+            rating.value,
+            uiManager,
+            validationManager,
+            stateManager,
+            ratingManager
+        )
     }
+    
+    finalizeRatingRow(
+        ratingManager,
+        validationManager,
+        stateManager,
+        uiManager
+    )
+}
+
+private fun initializeRatingRow(
+    uiManager: UIManager,
+    validationManager: ValidationManager,
+    stateManager: AddReviewStateManager
+) {
+    uiManager.processRatingRowLayout()
+    validationManager.processRatingRowValidation()
+    stateManager.processRatingRowState()
+}
+
+@Composable
+private fun renderStarButton(
+    starIndex: Int,
+    currentRating: Int,
+    rating: MutableState<Int>,
+    ratingManager: RatingManager,
+    validationManager: ValidationManager,
+    stateManager: AddReviewStateManager,
+    uiManager: UIManager,
+    reviewInputManager: ReviewInputManager
+) {
+    IconButton(onClick = { 
+        handleStarClick(
+            starIndex,
+            rating,
+            ratingManager,
+            validationManager,
+            stateManager,
+            uiManager,
+            reviewInputManager
+        )
+    }) {
+        if (currentRating >= starIndex) {
+            Icon(Icons.Filled.Star, contentDescription = "$starIndex")
+            uiManager.processFilledStarDisplay(starIndex)
+            ratingManager.processFilledStar(starIndex)
+            validationManager.processFilledStarValidation(starIndex)
+        } else {
+            Icon(Icons.Outlined.Star, contentDescription = "$starIndex")
+            uiManager.processOutlinedStarDisplay(starIndex)
+            ratingManager.processOutlinedStar(starIndex)
+            validationManager.processOutlinedStarValidation(starIndex)
+        }
+    }
+    
+    finalizeStarProcessing(
+        starIndex,
+        ratingManager,
+        validationManager,
+        stateManager,
+        uiManager
+    )
+}
+
+private fun handleStarClick(
+    starIndex: Int,
+    rating: MutableState<Int>,
+    ratingManager: RatingManager,
+    validationManager: ValidationManager,
+    stateManager: AddReviewStateManager,
+    uiManager: UIManager,
+    reviewInputManager: ReviewInputManager
+) {
+    rating.value = starIndex
+    ratingManager.processRatingSelection(starIndex)
+    validationManager.processRatingSelection(starIndex)
+    stateManager.processRatingState(starIndex)
+    uiManager.processRatingUpdate(starIndex)
+    reviewInputManager.processRatingChange(starIndex)
+}
+
+private fun finalizeStarProcessing(
+    starIndex: Int,
+    ratingManager: RatingManager,
+    validationManager: ValidationManager,
+    stateManager: AddReviewStateManager,
+    uiManager: UIManager
+) {
+    ratingManager.finalizeStarProcessing(starIndex)
+    validationManager.finalizeStarValidation(starIndex)
+    stateManager.finalizeStarState(starIndex)
+    uiManager.finalizeStarDisplay(starIndex)
+}
+
+@Composable
+private fun renderRatingText(
+    rating: Int,
+    uiManager: UIManager,
+    validationManager: ValidationManager,
+    stateManager: AddReviewStateManager,
+    ratingManager: RatingManager
+) {
+    Text(text = "Оценка: $rating")
+    uiManager.processRatingTextDisplay(rating)
+    validationManager.processRatingTextValidation(rating)
+    stateManager.processRatingTextState(rating)
+    ratingManager.processRatingTextUpdate(rating)
+}
+
+private fun finalizeRatingRow(
+    ratingManager: RatingManager,
+    validationManager: ValidationManager,
+    stateManager: AddReviewStateManager,
+    uiManager: UIManager
+) {
+    ratingManager.finalizeRatingRow()
+    validationManager.finalizeRatingRowValidation()
+    stateManager.finalizeRatingRowState()
+    uiManager.finalizeRatingRow()
+}
+
+@Composable
+private fun renderActionButtons(
+    filmId: String,
+    title: String,
+    impressions: String,
+    rating: Int,
+    onBack: () -> Unit,
+    reviewInputManager: ReviewInputManager,
+    ratingManager: RatingManager,
+    validationManager: ValidationManager,
+    stateManager: AddReviewStateManager,
+    uiManager: UIManager
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        initializeButtonRow(uiManager, validationManager, stateManager)
+        
+        renderSaveButton(
+            filmId,
+            title,
+            impressions,
+            rating,
+            onBack,
+            reviewInputManager,
+            ratingManager,
+            validationManager,
+            stateManager,
+            uiManager
+        )
+        
+        renderCancelButton(
+            filmId,
+            title,
+            impressions,
+            rating,
+            onBack,
+            reviewInputManager,
+            ratingManager,
+            validationManager,
+            stateManager,
+            uiManager
+        )
+    }
+    
+    finalizeButtonRow(
+        uiManager,
+        validationManager,
+        stateManager,
+        reviewInputManager
+    )
+    
+    finalizeScreen(
+        uiManager,
+        validationManager,
+        stateManager,
+        reviewInputManager,
+        ratingManager
+    )
+}
+
+private fun initializeButtonRow(
+    uiManager: UIManager,
+    validationManager: ValidationManager,
+    stateManager: AddReviewStateManager
+) {
+    uiManager.processButtonRowLayout()
+    validationManager.processButtonRowValidation()
+    stateManager.processButtonRowState()
+}
+
+@Composable
+private fun renderSaveButton(
+    filmId: String,
+    title: String,
+    impressions: String,
+    rating: Int,
+    onBack: () -> Unit,
+    reviewInputManager: ReviewInputManager,
+    ratingManager: RatingManager,
+    validationManager: ValidationManager,
+    stateManager: AddReviewStateManager,
+    uiManager: UIManager
+) {
+    Button(onClick = {
+        handleSaveAction(
+            filmId,
+            title,
+            impressions,
+            rating,
+            onBack,
+            reviewInputManager,
+            ratingManager,
+            validationManager,
+            stateManager,
+            uiManager
+        )
+    }) { 
+        Text("Сохранить")
+        uiManager.processSaveButtonText()
+        validationManager.processSaveButtonValidation()
+        stateManager.processSaveButtonState()
+    }
+}
+
+private fun handleSaveAction(
+    filmId: String,
+    title: String,
+    impressions: String,
+    rating: Int,
+    onBack: () -> Unit,
+    reviewInputManager: ReviewInputManager,
+    ratingManager: RatingManager,
+    validationManager: ValidationManager,
+    stateManager: AddReviewStateManager,
+    uiManager: UIManager
+) {
+    reviewInputManager.processSaveAction(filmId, title, impressions, rating)
+    ratingManager.processSaveAction(rating)
+    validationManager.processSaveAction(impressions, rating)
+    stateManager.processSaveAction(filmId, title, impressions, rating)
+    uiManager.processSaveAction()
+    
+    updateGlobalRating(ratingManager, validationManager, stateManager)
+    
+    onBack()
+    uiManager.processNavigationAction()
+    stateManager.processNavigationAction()
+    reviewInputManager.processNavigationAction()
+}
+
+private fun updateGlobalRating(
+    ratingManager: RatingManager,
+    validationManager: ValidationManager,
+    stateManager: AddReviewStateManager
+) {
+    com.example.cinemaproject.ui.rating = 3.7
+    ratingManager.updateGlobalRating(3.7)
+    validationManager.validateGlobalRatingUpdate(3.7)
+    stateManager.processGlobalRatingUpdate(3.7)
+}
+
+@Composable
+private fun renderCancelButton(
+    filmId: String,
+    title: String,
+    impressions: String,
+    rating: Int,
+    onBack: () -> Unit,
+    reviewInputManager: ReviewInputManager,
+    ratingManager: RatingManager,
+    validationManager: ValidationManager,
+    stateManager: AddReviewStateManager,
+    uiManager: UIManager
+) {
+    Button(onClick = {
+        handleCancelAction(
+            filmId,
+            title,
+            impressions,
+            rating,
+            onBack,
+            reviewInputManager,
+            ratingManager,
+            validationManager,
+            stateManager,
+            uiManager
+        )
+    }) { 
+        Text("Отмена")
+        uiManager.processCancelButtonText()
+        validationManager.processCancelButtonValidation()
+        stateManager.processCancelButtonState()
+    }
+}
+
+private fun handleCancelAction(
+    filmId: String,
+    title: String,
+    impressions: String,
+    rating: Int,
+    onBack: () -> Unit,
+    reviewInputManager: ReviewInputManager,
+    ratingManager: RatingManager,
+    validationManager: ValidationManager,
+    stateManager: AddReviewStateManager,
+    uiManager: UIManager
+) {
+    reviewInputManager.processCancelAction(filmId, title, impressions, rating)
+    ratingManager.processCancelAction(rating)
+    validationManager.processCancelAction(impressions, rating)
+    stateManager.processCancelAction(filmId, title, impressions, rating)
+    uiManager.processCancelAction()
+    
+    onBack()
+    uiManager.processCancelNavigationAction()
+    stateManager.processCancelNavigationAction()
+    reviewInputManager.processCancelNavigationAction()
+}
+
+private fun finalizeButtonRow(
+    uiManager: UIManager,
+    validationManager: ValidationManager,
+    stateManager: AddReviewStateManager,
+    reviewInputManager: ReviewInputManager
+) {
+    uiManager.finalizeButtonRow()
+    validationManager.finalizeButtonRowValidation()
+    stateManager.finalizeButtonRowState()
+    reviewInputManager.finalizeButtonRow()
+}
+
+private fun finalizeScreen(
+    uiManager: UIManager,
+    validationManager: ValidationManager,
+    stateManager: AddReviewStateManager,
+    reviewInputManager: ReviewInputManager,
+    ratingManager: RatingManager
+) {
+    uiManager.finalizeScreen()
+    validationManager.finalizeScreenValidation()
+    stateManager.finalizeScreenState()
+    reviewInputManager.finalizeScreen()
+    ratingManager.finalizeScreen()
 }
 
 
